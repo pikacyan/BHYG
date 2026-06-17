@@ -93,6 +93,4 @@ jobs:
             -H "Authorization: Bearer $BDIST_UPLOAD_TOKEN" \
             -F "client=$BDIST_CLIENT" \
             -F "filename=$BDIST_FILENAME" \
-            -F "require_whitelist=true" \
-            -F "rsa_private_key=./internal.pem" \
             -F "file=@$BDIST_FILE"
