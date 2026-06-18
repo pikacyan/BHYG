@@ -23,8 +23,12 @@ BANNER = """
 3 年过去，愿初心仍在。
 """
 
-REGULAR_PROJECT_ID_MSG = "常用ProjectId:\n上海·BILIBILI MACRO LINK 2026: 1001701"
-DEFAULT_PID = 1001701
+REGULAR_PROJECT_ID_MSG = """常用ProjectId:
+上海·BilibiliWorld 2026: 1001653
+上海·BILIBILI MACRO LINK-PLAY! 2026: 1001701
+杭州·2026洛天依「无限共鸣.纯蓝幻乐」巡回演唱会: 1002386
+"""
+DEFAULT_PID = 1001653
 
 def is_terminal_available():
     try:
