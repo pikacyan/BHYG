@@ -83,9 +83,11 @@ class BHYG(metaclass=ProtectedMeta):
             )
             logger.success("Debug mode is ON")
         logger.info(f"Machine ID: {self.machine_id}")
-        info = security.check_signature()
-        if info is None:
-            sys.exit(1)
+        info = "Source|local"
+        if not self.DEBUG:
+            info = security.check_signature()
+            if info is None:
+                sys.exit(1)
         print("Welcome, " + info.split("|")[0])
         self.last_order_time = 0
         self.last_order_check_time = 0
