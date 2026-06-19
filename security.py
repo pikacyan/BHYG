@@ -1,17 +1,11 @@
-import json
 import machineid
 import hashlib
-import secrets
 import sys
-import os
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA1
 
-from Crypto.Util.Padding import pad, unpad
-import base64
 from loguru import logger
-import httpx
 
 logger.remove()
 logger.add(
@@ -29,38 +23,41 @@ S/pPof5iaElGRUW98QIDAQAB
 -----END PUBLIC KEY-----"""
 
 SALT = "BHYG_OSS_SALT"
-MACHINE_ID = hashlib.sha256(machineid.hashed_id().encode()+SALT.encode()).hexdigest()
+MACHINE_ID = hashlib.sha256(machineid.hashed_id().encode() + SALT.encode()).hexdigest()
 HASHED_MACHINE_ID = hashlib.sha256(MACHINE_ID.encode()).hexdigest()[:7]
 
-FALLBACK_POLICY = {
-    "allow_run": False
-}
+FALLBACK_POLICY = {"allow_run": False}
 
 FAILED_TIME = 0
 
 POLICY = FALLBACK_POLICY
 
+
 def get_machine_id() -> str:
     return HASHED_MACHINE_ID
+
 
 def get_policy_value(key: str, default=None):
     # NOT AVAILABLE IN OSS
     raise Exception("NOT AVAILABLE IN OSS")
 
+
 def fetch_policy(version: str) -> dict:
     # NOT AVAILABLE IN OSS
     raise Exception("NOT AVAILABLE IN OSS")
-    
+
+
 def heartbeat(version: str, uid: str):
     # NOT AVAILABLE IN OSS
     raise Exception("NOT AVAILABLE IN OSS")
+
 
 def check_signature() -> str:
     try:
         with open(sys.argv[0], "rb") as f:
             executable_data = f.read()
         data = executable_data[-256:-128]
-        data = data.rstrip(b'\x00')
+        data = data.rstrip(b"\x00")
         if not data:
             print("Warning: No signature data found!")
             return None

@@ -1,20 +1,13 @@
 import base64
 import json
-from math import e
 import os
 import random
 import sys
 import time
-import httpx
 
-import threading
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import hashlib
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives import hashes
 import questionary
 from sentry_sdk.scrubber import EventScrubber
 from sentry_sdk.integrations.loguru import LoguruIntegration, LoggingLevels
@@ -40,19 +33,18 @@ class ProtectedMeta(type):
             raise AttributeError(f"Cannot override {name} in class {cls.__name__}")
         super().__setattr__(name, value)
 
+
 @final
 class BHYG(metaclass=ProtectedMeta):
     def __new__(cls, *args, **kwargs):
         if cls is not BHYG:
-            raise TypeError(f"Hacker!!!")
+            raise TypeError("Hacker!!!")
         return super().__new__(cls)
 
     def __init_subclass__(cls, **kwargs):
-        raise TypeError(f"Hacker!!!")
+        raise TypeError("Hacker!!!")
 
-    def __init__(
-        self
-    ):
+    def __init__(self):
         global POLICY_BASE, VERSION
         if sys.argv[0].endswith(".py"):
             self.DEBUG = True
@@ -134,7 +126,7 @@ class BHYG(metaclass=ProtectedMeta):
         if USE_CAPTCHA:
             try:
                 logger.info(self.i18n("setting_up_captcha_system"))
-                import bili_ticket_gt_python # type: ignore
+                import bili_ticket_gt_python  # type: ignore
 
                 self.click = bili_ticket_gt_python.ClickPy()
             except BaseException as e:
@@ -142,7 +134,6 @@ class BHYG(metaclass=ProtectedMeta):
                 self.click = None
         self.get_login_state()
 
-        
     def get_login_state(self):
         while True:
             self.switch_account(on_start=True)
@@ -162,7 +153,6 @@ class BHYG(metaclass=ProtectedMeta):
             else:
                 continue
 
-    
     def switch_account(self, on_start=False):
         self.ensure_config_folder()
         accounts = []
@@ -172,9 +162,7 @@ class BHYG(metaclass=ProtectedMeta):
                 uid = file[len("bhyg_user_") : -len(".sba")]
                 accounts.append(uid)
         accounts.append(self.i18n("qr_code"))
-        uid = questionary.select(
-            self.i18n("select_account"), choices=accounts
-        ).ask()
+        uid = questionary.select(self.i18n("select_account"), choices=accounts).ask()
         if uid is None:
             if on_start:
                 logger.info(self.i18n("exit"))
@@ -193,6 +181,7 @@ class BHYG(metaclass=ProtectedMeta):
                 logger.error(self.i18n("qr_code_generate_failed"))
                 return
             import qrcode
+
             qr = qrcode.QRCode(version=1, box_size=10, border=5)
             qr.add_data(url)
             qr.make(fit=True)
@@ -217,7 +206,7 @@ class BHYG(metaclass=ProtectedMeta):
                 except KeyboardInterrupt:
                     logger.info(self.i18n("canceled"))
                     return
-        if self.config.get("uid",0) == int(uid):
+        if self.config.get("uid", 0) == int(uid):
             return
         self.config["uid"] = int(uid)
         self.load_session()
@@ -234,7 +223,6 @@ class BHYG(metaclass=ProtectedMeta):
         else:
             logger.debug("Language not supported, set to zh_CN")
             self.set_lang("zh_CN")
-
 
     def time(self):
         return time.time()
@@ -270,7 +258,7 @@ class BHYG(metaclass=ProtectedMeta):
         except Exception as e:
             logger.error(self.i18n("aes_decrypt_failed").format(error=e))
             return ""
-        
+
     def encrypt_aes(self, data: str) -> str:
         try:
             key = hashlib.md5(self.machine_id.encode()).hexdigest().encode()[:16]
@@ -353,9 +341,7 @@ class BHYG(metaclass=ProtectedMeta):
                     session = self.decrypt_aes(session)
                     self.client.load(session)
                 except Exception as e:
-                    logger.error(
-                        self.i18n("session_decrypt_failed").format(error=e)
-                    )
+                    logger.error(self.i18n("session_decrypt_failed").format(error=e))
                     return
                 sentry_sdk.set_context(
                     "session_token", dict(self.client.session.cookies)
@@ -369,9 +355,7 @@ class BHYG(metaclass=ProtectedMeta):
                 base_path = sys._MEIPASS
             except Exception:
                 base_path = os.path.dirname(__file__)
-            locale_file_path = (
-                base_path + os.path.sep + f"locale/{lang}.json"
-            )
+            locale_file_path = base_path + os.path.sep + f"locale/{lang}.json"
             with open(locale_file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
@@ -646,7 +630,7 @@ class BHYG(metaclass=ProtectedMeta):
             and hasattr(self, "token_exp")
             and hasattr(self, "ptoken")
         ):
-        # exist
+            # exist
             if time.time() < self.token_exp - 60:
                 # not expired
                 return self.token, self.ptoken
@@ -999,7 +983,7 @@ class BHYG(metaclass=ProtectedMeta):
             logger.error(self.i18n("night8_failed").format(message=resp["message"]))
             return False
         else:
-            if resp["data"]["inExp"] == False:
+            if not resp["data"]["inExp"]:
                 logger.error(self.i18n("night8_not_open"))
                 return False
         logger.info(
@@ -1169,8 +1153,6 @@ class BHYG(metaclass=ProtectedMeta):
                 if self.config.get("ptoken", "") == ""
                 else self.config.get("ptoken", "")
             )
-            ctoken_bak = data["ctoken"]
-            ptoken_bak = data["ptoken"]
             data["orderCreateUrl"] = (
                 "https://show.bilibili.com/api/ticket/order/createV2"
             )
@@ -1244,7 +1226,7 @@ class BHYG(metaclass=ProtectedMeta):
                 if self.config["id_bind"] == 1 or self.config["id_bind"] == 2
                 else self.config["buyer"],
             )
-            sentry_sdk.capture_message(f"Order Success", level="info")
+            sentry_sdk.capture_message("Order Success", level="info")
             buyers = ""
             if self.config["id_bind"] == 0:
                 buyers = self.config["buyer"]
@@ -1265,7 +1247,7 @@ class BHYG(metaclass=ProtectedMeta):
             )
             try:
                 self.client.post(
-                    f"https://report.rakuyoudesu.com/report",
+                    "https://report.rakuyoudesu.com/report",
                     json={
                         "app": "bhyg",
                         "version": VERSION,
@@ -1282,7 +1264,7 @@ class BHYG(metaclass=ProtectedMeta):
                         },
                     },
                 )
-            except:
+            except Exception:
                 pass
             if len(push_config["push_actions"]) > 0:
                 # img to base64
@@ -1382,7 +1364,10 @@ class BHYG(metaclass=ProtectedMeta):
         buyers = ""
         if self.config.get("id_bind", None) == 0:
             buyers = self.config.get("buyer", "未知")
-        elif self.config.get("id_bind", None) == 1 or self.config.get("id_bind", None) == 2:
+        elif (
+            self.config.get("id_bind", None) == 1
+            or self.config.get("id_bind", None) == 2
+        ):
             buyers = ", ".join(
                 [
                     f"{buyer['name'][0]}{'*' * (len(buyer['name']) - 1)}"
@@ -1519,10 +1504,7 @@ class BHYG(metaclass=ProtectedMeta):
                 ) or count % 1200 == 0:
                     # self.refresh_policy(rush_time=True)
                     pass
-            if (
-                stock_check_count == 0
-                and self.config.get("enable_check_stock", True)
-            ):
+            if stock_check_count == 0 and self.config.get("enable_check_stock", True):
                 if not self.check_stock():
                     logger.info(self.i18n("no_stock"))
                     continue
@@ -1574,7 +1556,9 @@ class BHYG(metaclass=ProtectedMeta):
         if resp["code"] == 0:
             self.follow["followed"] = (
                 True
-                if resp["data"]["attribute"] == 2 or resp["data"]["attribute"] == 6 or self.client.uid == 531718444
+                if resp["data"]["attribute"] == 2
+                or resp["data"]["attribute"] == 6
+                or self.client.uid == 531718444
                 else False
             )
             self.follow["be_followed"] = (
@@ -1735,7 +1719,7 @@ class BHYG(metaclass=ProtectedMeta):
                         remote_ip=self.i18n("unknown"),
                     )
                 )
-        except:
+        except Exception:
             info_msg_lines.extend(
                 self.i18n("cc_remote_ip").format(
                     remote_ip_channel=self.i18n("cc_bs_api"),
@@ -1773,7 +1757,7 @@ class BHYG(metaclass=ProtectedMeta):
 
         # Current Zone Info
         try:
-            if 0: # SUPERMODE V2
+            if 0:  # SUPERMODE V2
                 self.order_base = "https://www.bilibili.cn"
                 resp = self.client.post(
                     self.order_base + "/api/ticket/order/createV2", raw=True

@@ -5,7 +5,6 @@ import tempfile
 import os
 
 import atexit
-import qrcode
 import questionary
 import sentry_sdk
 from loguru import logger
@@ -30,6 +29,7 @@ REGULAR_PROJECT_ID_MSG = """常用ProjectId:
 """
 DEFAULT_PID = 1001653
 
+
 def is_terminal_available():
     try:
         return sys.stdout.isatty() and sys.stderr.isatty()
@@ -53,6 +53,7 @@ def exit_handler():
         sys.exit(1)
     return
 
+
 def select_ticket():
     SALE_STATUS_MAP = {
         1: client.i18n("sale_status_1"),
@@ -66,7 +67,8 @@ def select_ticket():
     }
     logger.info(REGULAR_PROJECT_ID_MSG)
     project_id = questionary.text(
-        client.i18n("project_id"), validate=lambda text: text.isdigit(),
+        client.i18n("project_id"),
+        validate=lambda text: text.isdigit(),
         default=str(DEFAULT_PID),
     ).ask()
     if not project_id:
@@ -94,15 +96,22 @@ def select_ticket():
     client.config["id_bind"] = resp["data"]["id_bind"]
     client.config["is_changfan"] = False
     # prefill support
-    if resp["data"].get("preFillSupport", False) and not resp["data"].get("preFillBaseInfo", None):
+    if resp["data"].get("preFillSupport", False) and not resp["data"].get(
+        "preFillBaseInfo", None
+    ):
         logger.info(client.i18n("prefill_support"))
     if resp["data"].get("preFillBaseInfo", None):
-        logger.debug("preFillBaseInfo: {}".format(resp["data"].get("preFillBaseInfo", None)))
-        logger.debug("preFillRealnameInfo: {}".format(resp["data"].get("preFillRealnameInfo", None)))
+        logger.debug(
+            "preFillBaseInfo: {}".format(resp["data"].get("preFillBaseInfo", None))
+        )
+        logger.debug(
+            "preFillRealnameInfo: {}".format(
+                resp["data"].get("preFillRealnameInfo", None)
+            )
+        )
         screenId = resp["data"]["preFillBaseInfo"].get("screenId", None)
         skuId = resp["data"]["preFillBaseInfo"].get("skuId", None)
         count = resp["data"]["preFillBaseInfo"].get("count", None)
-        preFillTime = resp["data"]["preFillBaseInfo"].get("preFillTime", None)
         screens = resp["data"]["screen_list"]
         prefilled_screen = None
         for screen in screens:
@@ -121,14 +130,18 @@ def select_ticket():
         prefilled_buyer_id_buyer = []
         if buyer_list["code"] == 0:
             for buyer in buyer_list["data"]["list"]:
-                if buyer["id"] in resp["data"]["preFillRealnameInfo"].get("buyerIds", []):
-                    prefilled_buyer_id_buyer.append({
-                        "id": buyer["id"],
-                        "name": buyer["name"],
-                        "tel": buyer["tel"],
-                        "personal_id": buyer["personal_id"],
-                        "id_type": buyer["id_type"],
-                    })
+                if buyer["id"] in resp["data"]["preFillRealnameInfo"].get(
+                    "buyerIds", []
+                ):
+                    prefilled_buyer_id_buyer.append(
+                        {
+                            "id": buyer["id"],
+                            "name": buyer["name"],
+                            "tel": buyer["tel"],
+                            "personal_id": buyer["personal_id"],
+                            "id_type": buyer["id_type"],
+                        }
+                    )
         id_type_name = {
             0: client.i18n("id_type_idcard"),
             1: client.i18n("id_type_passport"),
@@ -136,28 +149,51 @@ def select_ticket():
             3: client.i18n("id_type_taiwan"),
         }
 
-        logger.info(client.i18n("prefill_base_info").format(
-            # screenId=screenId,
-            # skuId=skuId,
-            screen=prefilled_screen["name"] if prefilled_screen else None,
-            sku=prefilled_sku["desc"] if prefilled_sku else None,
-            count=count,
-            buyer_info=", ".join([client.i18n("buyer_info").format(
-                name=buyer["name"],
-                tel=buyer["tel"],
-                personal_id=buyer["personal_id"],
-                id_type=id_type_name[buyer["id_type"]],
-            ) for buyer in prefilled_buyer_id_buyer]) if prefilled_buyer_id_buyer else None,
-        ))
+        logger.info(
+            client.i18n("prefill_base_info").format(
+                # screenId=screenId,
+                # skuId=skuId,
+                screen=prefilled_screen["name"] if prefilled_screen else None,
+                sku=prefilled_sku["desc"] if prefilled_sku else None,
+                count=count,
+                buyer_info=", ".join(
+                    [
+                        client.i18n("buyer_info").format(
+                            name=buyer["name"],
+                            tel=buyer["tel"],
+                            personal_id=buyer["personal_id"],
+                            id_type=id_type_name[buyer["id_type"]],
+                        )
+                        for buyer in prefilled_buyer_id_buyer
+                    ]
+                )
+                if prefilled_buyer_id_buyer
+                else None,
+            )
+        )
         if_use_prefill = questionary.confirm(client.i18n("use_prefill_base_info")).ask()
         if if_use_prefill:
             client.config["screen_id"] = int(screenId) if screenId else None
             client.config["sku_id"] = int(skuId) if skuId else None
-            client.config["sale_start_time"] = int(time.mktime(time.strptime(prefilled_sku["sale_start"], "%Y-%m-%d %H:%M:%S"))) if prefilled_sku and prefilled_sku.get("sale_start", None) else None
+            client.config["sale_start_time"] = (
+                int(
+                    time.mktime(
+                        time.strptime(prefilled_sku["sale_start"], "%Y-%m-%d %H:%M:%S")
+                    )
+                )
+                if prefilled_sku and prefilled_sku.get("sale_start", None)
+                else None
+            )
             client.config["count"] = int(count) if count else None
-            client.config["pay_money"] = int(prefilled_sku["price"]) * int(count) if prefilled_sku and count else None
+            client.config["pay_money"] = (
+                int(prefilled_sku["price"]) * int(count)
+                if prefilled_sku and count
+                else None
+            )
             # ticket_name
-            client.config["ticket_name"] = f"{resp['data']['name']} {prefilled_screen['name'] if prefilled_screen else ''} {prefilled_sku['desc'] if prefilled_sku else ''}"
+            client.config["ticket_name"] = (
+                f"{resp['data']['name']} {prefilled_screen['name'] if prefilled_screen else ''} {prefilled_sku['desc'] if prefilled_sku else ''}"
+            )
             client.config["order_type"] = 1
             client.config["id_buyer"] = prefilled_buyer_id_buyer
             client.config["buyer"] = resp["data"]["preFillRealnameInfo"]["name"]
@@ -574,17 +610,19 @@ def main():
                             client.i18n("gotify_server"),
                             default=default_server,
                             validate=lambda text: (
-                                text.startswith("http://")
-                                or text.startswith("https://")
-                            )
-                            and text.count("/") == 2,
+                                (
+                                    text.startswith("http://")
+                                    or text.startswith("https://")
+                                )
+                                and text.count("/") == 2
+                            ),
                         ).ask()
                         gotify_config["token"] = questionary.text(
                             client.i18n("gotify_token"), default=default_token
                         ).ask()
                         if (
-                            gotify_config["server"] == None
-                            or gotify_config["token"] == None
+                            gotify_config["server"] is None
+                            or gotify_config["token"] is None
                         ):
                             push_config["push_actions"].remove("gotify")
                             logger.info(client.i18n("canceled"))
@@ -609,10 +647,12 @@ def main():
                             client.i18n("ob11_server"),
                             default=default_server,
                             validate=lambda text: (
-                                text.startswith("http://")
-                                or text.startswith("https://")
-                            )
-                            and text.count("/") == 2,
+                                (
+                                    text.startswith("http://")
+                                    or text.startswith("https://")
+                                )
+                                and text.count("/") == 2
+                            ),
                         ).ask()
                         ob11_config["token"] = questionary.text(
                             client.i18n("ob11_token"), default=default_token
@@ -641,9 +681,9 @@ def main():
                         ).ask()
                         ob11_config["send_target"] = int(ob11_config["send_target"])
                         if (
-                            ob11_config["send_target"] == None
-                            or ob11_config["token"] == None
-                            or ob11_config["server"] == None
+                            ob11_config["send_target"] is None
+                            or ob11_config["token"] is None
+                            or ob11_config["server"] is None
                         ):
                             push_config["push_actions"].remove("ob11")
                             logger.info(client.i18n("canceled"))
@@ -668,10 +708,12 @@ def main():
                             client.i18n("milky_server"),
                             default=default_server,
                             validate=lambda text: (
-                                text.startswith("http://")
-                                or text.startswith("https://")
-                            )
-                            and text.count("/") == 2,
+                                (
+                                    text.startswith("http://")
+                                    or text.startswith("https://")
+                                )
+                                and text.count("/") == 2
+                            ),
                         ).ask()
                         milky_config["token"] = questionary.text(
                             client.i18n("milky_token"), default=default_token
@@ -700,9 +742,9 @@ def main():
                         ).ask()
                         milky_config["send_target"] = int(milky_config["send_target"])
                         if (
-                            milky_config["send_target"] == None
-                            or milky_config["token"] == None
-                            or milky_config["server"] == None
+                            milky_config["send_target"] is None
+                            or milky_config["token"] is None
+                            or milky_config["server"] is None
                         ):
                             push_config["push_actions"].remove("milky")
                             logger.info(client.i18n("canceled"))
@@ -727,10 +769,12 @@ def main():
                             client.i18n("bark_server"),
                             default=default_server,
                             validate=lambda text: (
-                                text.startswith("http://")
-                                or text.startswith("https://")
-                            )
-                            and text.count("/") == 2,
+                                (
+                                    text.startswith("http://")
+                                    or text.startswith("https://")
+                                )
+                                and text.count("/") == 2
+                            ),
                         ).ask()
                         bark_config["key"] = questionary.text(
                             client.i18n("bark_key"),
@@ -741,9 +785,9 @@ def main():
                             client.i18n("bark_enhanced")
                         ).ask()
                         if (
-                            bark_config["key"] == None
-                            or bark_config["server"] == None
-                            or bark_config["enhanced"] == None
+                            bark_config["key"] is None
+                            or bark_config["server"] is None
+                            or bark_config["enhanced"] is None
                         ):
                             push_config["push_actions"].remove("bark")
                             logger.info(client.i18n("canceled"))
@@ -768,17 +812,19 @@ def main():
                             client.i18n("ntfy_server"),
                             default=default_server,
                             validate=lambda text: (
-                                text.startswith("http://")
-                                or text.startswith("https://")
-                            )
-                            and text.count("/") == 2,
+                                (
+                                    text.startswith("http://")
+                                    or text.startswith("https://")
+                                )
+                                and text.count("/") == 2
+                            ),
                         ).ask()
                         ntfy_config["topic"] = questionary.text(
                             client.i18n("ntfy_topic"), default=default_topic
                         ).ask()
                         if (
-                            ntfy_config["topic"] == None
-                            or ntfy_config["server"] == None
+                            ntfy_config["topic"] is None
+                            or ntfy_config["server"] is None
                         ):
                             push_config["push_actions"].remove("ntfy")
                             logger.info(client.i18n("canceled"))
@@ -800,7 +846,7 @@ def main():
                                     re.match(r"^[a-zA-Z0-9_.-]+$", text)
                                 ),
                             ).ask()
-                            if desktop_notify_config["sound_path"] == None:
+                            if desktop_notify_config["sound_path"] is None:
                                 logger.info(client.i18n("canceled"))
                                 desktop_notify_config["sound_path"] = ""
                         else:
@@ -819,7 +865,7 @@ def main():
                         pushplus_config["token"] = questionary.text(
                             client.i18n("pushplus_token"), default=default_token
                         ).ask()
-                        if pushplus_config["token"] == None:
+                        if pushplus_config["token"] is None:
                             push_config["push_actions"].remove("pushplus")
                             logger.info(client.i18n("canceled"))
                             continue
@@ -841,7 +887,7 @@ def main():
                             client.i18n("server_chan_send_key"),
                             default=default_send_key,
                         ).ask()
-                        if server_chan_config["send_key"] == None:
+                        if server_chan_config["send_key"] is None:
                             push_config["push_actions"].remove("server_chan")
                             logger.info(client.i18n("canceled"))
                             continue
@@ -863,7 +909,7 @@ def main():
                         run_command_config["command"] = questionary.text(
                             client.i18n("run_command_command"), default=default_command
                         ).ask()
-                        if run_command_config["command"] == None:
+                        if run_command_config["command"] is None:
                             push_config["push_actions"].remove("run_command")
                             logger.info(client.i18n("canceled"))
                             continue
@@ -1014,12 +1060,12 @@ def main():
                             if item.startswith("_MEI"):
                                 try:
                                     shutil.rmtree(os.path.join(temp_dir, item))
-                                except Exception as e:
+                                except Exception:
                                     pass
                         logger.success(client.i18n("clean_cache_ok"))
                     except Exception as e:
                         logger.error(client.i18n("clean_cache_failed").format(error=e))
-                elif action == None or action == client.i18n("exit"):
+                elif action is None or action == client.i18n("exit"):
                     logger.info(client.i18n("exit"))
                     sentry_sdk.capture_message(
                         "Exit",

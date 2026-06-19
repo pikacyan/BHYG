@@ -56,6 +56,7 @@ def ob11_push(url, token, send_type, send_target, message, image):
         logger.debug(e)
         return False
 
+
 def milky_push(url, token, send_type, send_target, message, image):
     headers = {"Content-Type": "application/json"}
     if token is not None and token != "":
@@ -64,13 +65,13 @@ def milky_push(url, token, send_type, send_target, message, image):
         return False
     data = {
         f"{'user' if send_type == 'private' else 'group'}_id": send_target,
-        "message": [
-            {"type": "text", "data": {"text": message}}
-        ],
+        "message": [{"type": "text", "data": {"text": message}}],
     }
     try:
         with httpx.Client(base_url=url, follow_redirects=True) as client:
-            response = client.post(f"/api/send_{send_type}_message", headers=headers, json=data)
+            response = client.post(
+                f"/api/send_{send_type}_message", headers=headers, json=data
+            )
             response.raise_for_status()
             logger.debug(response.json())
             return True if response.json()["retcode"] == 0 else False
@@ -80,6 +81,7 @@ def milky_push(url, token, send_type, send_target, message, image):
     except Exception as e:
         logger.debug(e)
         return False
+
 
 def push_bark(url, key, message, jump_url, enhanced=False):
     headers = {"Content-Type": "application/json"}
@@ -140,9 +142,9 @@ def desktop_notify(title, message, need_sound, sound_path):
             try:
                 from playsound3 import playsound
 
-                logger.debug(f"playing sound...")
+                logger.debug(f"playing sound...")  # noqa: F541
                 playsound(sound=sound_path, block=False)
-            except:
+            except Exception:
                 logger.warning("playsound failed")
         return True
     except BaseException as e:
@@ -250,7 +252,7 @@ def do_push(
             if len(ticket_name) > 45:
                 ticket_name = ticket_name[:12] + "..." + ticket_name[-30:]
             if not desktop_notify(
-                f"【BHYG】锁票成功，尽快支付。",
+                "【BHYG】锁票成功，尽快支付。",
                 f"票名: {ticket_name}\n购票人: {buyer_name} 用户: {username}\n订单ID: {order_id}",
                 push_config["desktop_notify"]["need_sound"],
                 push_config["desktop_notify"]["sound_path"],
@@ -259,14 +261,14 @@ def do_push(
         elif push_type == "pushplus":
             if not push_pushplus(
                 push_config["pushplus"]["token"],
-                f"【BHYG】锁票成功，尽快支付。",
+                "【BHYG】锁票成功，尽快支付。",
                 f"票名: {ticket_name}\n购票人: {buyer_name}\n用户: {username}\n订单ID：{order_id}\nhttps://mall.bilibili.com/neul-next/ticket/orderDetail.html?order_id={order_id}",
             ):
                 success = False
         elif push_type == "server_chan":
             if not push_server_chan(
                 push_config["server_chan"]["send_key"],
-                f"【BHYG】锁票成功，尽快支付。",
+                "【BHYG】锁票成功，尽快支付。",
                 f"票名: {ticket_name}\n购票人: {buyer_name}\n用户: {username}\n订单ID：{order_id}\nhttps://mall.bilibili.com/neul-next/ticket/orderDetail.html?order_id={order_id}",
             ):
                 success = False
@@ -274,7 +276,7 @@ def do_push(
             if not push_ntfy(
                 push_config["ntfy"]["server"],
                 push_config["ntfy"]["topic"],
-                f"【BHYG】锁票成功，尽快支付。",
+                "【BHYG】锁票成功，尽快支付。",
                 f"票名: {ticket_name}\n购票人: {buyer_name}\n用户: {username}\n订单ID: {order_id}",
                 f"bilibili://browser?url=https://mall.bilibili.com/neul-next/ticket/orderDetail.html?order_id={order_id}",
             ):
