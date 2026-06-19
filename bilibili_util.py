@@ -728,6 +728,7 @@ class BilibiliClient:
             return resp_content
 
     def post(self, url: str, **kwargs) -> httpx.Response:
+        raw = kwargs.pop("raw", False)
         try:
             if "ip" in kwargs and "createV2" in url:
                 from urllib.parse import urlparse
@@ -736,7 +737,7 @@ class BilibiliClient:
                 url = url.replace(hostname, kwargs["ip"])
                 kwargs.pop("ip")
                 headers = kwargs.get("headers", {})
-                kwargs.pop("headers")
+                kwargs.pop("headers", None)
                 headers["Host"] = hostname
                 headers = httpx.Headers(headers)
                 logger.debug(f"Request headers: {headers}")
@@ -746,7 +747,7 @@ class BilibiliClient:
                 resp = self.session.post(url, **kwargs)
         except Exception as e:
             return {"code": -114514, "message": f"请求失败：{e}", "data": None}
-        if "raw" in locals():
+        if raw:
             return resp
         if resp.status_code == 200:
             try:
