@@ -6,7 +6,6 @@ import os
 
 import atexit
 import questionary
-import sentry_sdk
 from loguru import logger
 
 from api import BHYG
@@ -39,11 +38,6 @@ def is_terminal_available():
 
 def exit_handler():
     logger.info("Exiting...")
-    sentry_sdk.capture_message(
-        "Exit",
-        level="info",
-    )
-    sentry_sdk.flush()
     import time
 
     logger.info("Wait 10s to exit...")
@@ -86,7 +80,6 @@ def select_ticket():
         )
         return
     client.config["project_id"] = int(project_id)
-    sentry_sdk.set_tag("project_id", project_id)
     logger.info(client.i18n("project_name").format(name=resp["data"]["name"]))
     ticket_name = f"{resp['data']['name']} "
     client.config["hotProject"] = resp["data"].get("hotProject", False)
@@ -474,10 +467,6 @@ def main():
     client = BHYG()
 
     while True:
-        sentry_sdk.capture_message(
-            "Entered Main Menu",
-            level="info",
-        )
         main_menu = [
             client.i18n("select_ticket_info"),
             client.i18n("select_buyer"),
@@ -964,9 +953,8 @@ def main():
                                     )
                         except Exception as e:
                             logger.exception(e)
-                            track = sentry_sdk.capture_exception(e)
                             logger.error(
-                                client.i18n("error_occurred").format(trace=track)
+                                client.i18n("error_occurred").format(trace="local")
                             )
                             continue
                 elif action == client.i18n("test_push"):
@@ -1067,10 +1055,6 @@ def main():
                         logger.error(client.i18n("clean_cache_failed").format(error=e))
                 elif action is None or action == client.i18n("exit"):
                     logger.info(client.i18n("exit"))
-                    sentry_sdk.capture_message(
-                        "Exit",
-                        level="info",
-                    )
                     normal_exit = True
                     sys.exit(0)
                 else:
@@ -1080,6 +1064,5 @@ def main():
                 continue
         except Exception as e:
             logger.exception(e)
-            track = sentry_sdk.capture_exception(e)
-            logger.error(client.i18n("error_occurred").format(trace=track))
+            logger.error(client.i18n("error_occurred").format(trace="local"))
             continue
