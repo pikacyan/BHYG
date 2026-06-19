@@ -1078,8 +1078,6 @@ def main():
                     continue
             except KeyboardInterrupt:
                 continue
-            except:
-                raise
         except Exception as e:
             logger.exception(e)
             track = sentry_sdk.capture_exception(e)
