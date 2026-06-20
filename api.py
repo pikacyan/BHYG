@@ -861,14 +861,14 @@ class BHYG(metaclass=ProtectedMeta):
                 try:
                     logger.info(
                         self.i18n("wait_until_sale_start").format(
-                            time=int(reserve_begin_time - time.time()) / 60
+                            time=int(reserve_begin_time - time.time())
                         )
                     )
                     while reserve_begin_time - 5 > time.time():
                         time.sleep(2)
                         logger.info(
                             self.i18n("wait_until_sale_start").format(
-                                time=int(reserve_begin_time - time.time()) / 60
+                                time=int(reserve_begin_time - time.time())
                             )
                         )
                         continue
@@ -1368,14 +1368,14 @@ class BHYG(metaclass=ProtectedMeta):
             if self.config["sale_start_time"] > time.time():
                 logger.info(
                     self.i18n("wait_until_sale_start").format(
-                        time=int(self.config["sale_start_time"] - time.time()) / 60
+                        time=int(self.config["sale_start_time"] - time.time())
                     )
                 )
                 while self.config["sale_start_time"] - 5 > time.time():
                     time.sleep(2)
                     logger.info(
                         self.i18n("wait_until_sale_start").format(
-                            time=int(self.config["sale_start_time"] - time.time()) / 60
+                            time=int(self.config["sale_start_time"] - time.time())
                         )
                     )
                     continue

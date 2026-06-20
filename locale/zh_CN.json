@@ -72,7 +72,7 @@
     "old_follower": "你是主播的老粉 / 互关哦~送你特殊权限喵~",
     "setting_up_captcha_system": "正在初始化验证码模块",
     "captcha_system_setup_failed": "验证码模块初始化失败: {error}",
-    "wait_until_sale_start": "等待开票，剩余 {time} 分钟",
+    "wait_until_sale_start": "等待开票，剩余 {time} 秒",
     "gaia_sms_verify_code": "请输入短信验证码",
     "gaia_sms_mo_confirm": "请确认已发送短信",
     "gaia_sms_mo_info": "请使用 {tel} 发送 {content} 到 {sms_mo_tel}",
